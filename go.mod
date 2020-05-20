@@ -1,4 +1,4 @@
-module github.com/Lukaesebrot/dgc
+module github.com/knoxfighter/dgc
 
 go 1.14
 
