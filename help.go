@@ -9,11 +9,89 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// generalHelp handles the general help command
-func generalHelp(ctx *Ctx) {
+var helpColor int
+
+// RegisterDefaultHelpCommand registers the default help command
+func (router *Router) RegisterDefaultHelpCommand(session *discordgo.Session, rateLimiter RateLimiter, color int) {
+	if color < 0 || color > 0xffffff {
+		helpColor = 0xffff00
+	} else {
+		helpColor = color
+	}
+
+	// Initialize the helo messages storage
+	router.InitializeStorage("dgc_helpMessages")
+
+	// Initialize the reaction add listener
+	session.AddHandler(func(session *discordgo.Session, event *discordgo.MessageReactionAdd) {
+		// Define useful variables
+		channelID := event.ChannelID
+		messageID := event.MessageID
+		userID := event.UserID
+
+		// Check whether or not the reaction was added by the bot itself
+		if event.UserID == session.State.User.ID {
+			return
+		}
+
+		// Check whether or not the message is a help message
+		rawPage, ok := router.Storage["dgc_helpMessages"].Get(channelID + ":" + messageID + ":" + event.UserID)
+		if !ok {
+			return
+		}
+		page := rawPage.(int)
+		if page <= 0 {
+			return
+		}
+
+		// Check which reaction was added
+		reactionName := event.Emoji.Name
+		switch reactionName {
+		case "⬅️":
+			// Update the help message
+			embed, newPage := renderDefaultGeneralHelpEmbed(router, page-1)
+			page = newPage
+			session.ChannelMessageEditEmbed(channelID, messageID, embed)
+
+			// Remove the reaction
+			session.MessageReactionRemove(channelID, messageID, reactionName, userID)
+			break
+		case "❌":
+			// Delete the help message
+			session.ChannelMessageDelete(channelID, messageID)
+			break
+		case "➡️":
+			// Update the help message
+			embed, newPage := renderDefaultGeneralHelpEmbed(router, page+1)
+			page = newPage
+			session.ChannelMessageEditEmbed(channelID, messageID, embed)
+
+			// Remove the reaction
+			session.MessageReactionRemove(channelID, messageID, reactionName, userID)
+			break
+		}
+
+		// Update the stores page
+		router.Storage["dgc_helpMessages"].Set(channelID+":"+messageID+":"+event.UserID, page)
+	})
+
+	// Register the default help command
+	router.RegisterCmd(&Command{
+		Name:        "help",
+		Description: "Lists all the available commands or displays some information about a specific command",
+		Usage:       "help [command name]",
+		Example:     "help yourCommand",
+		IgnoreCase:  true,
+		RateLimiter: rateLimiter,
+		Handler:     generalHelpCommand,
+	})
+}
+
+// generalHelpCommand handles the general help command
+func generalHelpCommand(ctx *Ctx) {
 	// Check if the user provided an argument
 	if ctx.Arguments.Amount() > 0 {
-		specificHelp(ctx)
+		specificHelpCommand(ctx)
 		return
 	}
 
@@ -31,11 +109,11 @@ func generalHelp(ctx *Ctx) {
 	session.MessageReactionAdd(channelID, message.ID, "➡️")
 
 	// Define the message as a help message
-	ctx.Router.helpMessages[channelID+":"+message.ID] = 1
+	ctx.Router.Storage["dgc_helpMessages"].Set(channelID+":"+message.ID+":"+ctx.Event.Author.ID, 1)
 }
 
-// specificHelp handles the specific help
-func specificHelp(ctx *Ctx) {
+// specificHelpCommand handles the specific help command
+func specificHelpCommand(ctx *Ctx) {
 	// Define the command names
 	commandNames := strings.Split(ctx.Arguments.Raw(), " ")
 
@@ -176,4 +254,3 @@ func renderDefaultSpecificHelpEmbed(ctx *Ctx, command *Command) *discordgo.Messa
 		},
 	}
 }
-

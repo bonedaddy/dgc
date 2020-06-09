@@ -3,6 +3,10 @@ package dgc
 import (
 	"regexp"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/karrick/tparse/v2"
 )
 
 var (
@@ -389,6 +393,39 @@ func (arguments *Arguments) AsSingle() *Argument {
 	}
 }
 
+// Amount returns the amount of given arguments
+func (arguments *Arguments) Amount() int {
+	return len(arguments.arguments)
+}
+
+// Get returns the n'th argument
+func (arguments *Arguments) Get(n int) *Argument {
+	if arguments.Amount() <= n {
+		return &Argument{
+			raw: "",
+		}
+	}
+	return arguments.arguments[n]
+}
+
+// Remove removes the n'th argument
+func (arguments *Arguments) Remove(n int) {
+	// Check if the given index is valid
+	if arguments.Amount() <= n {
+		return
+	}
+
+	// Set the new argument slice
+	arguments.arguments = append(arguments.arguments[:n], arguments.arguments[n+1:]...)
+
+	// Set the new raw string
+	raw := ""
+	for _, argument := range arguments.arguments {
+		raw += argument.raw + " "
+	}
+	arguments.raw = strings.TrimSpace(raw)
+}
+
 // AsCodeblock parses the given arguments as a codeblock
 func (arguments *Arguments) AsCodeblock() *Codeblock {
 	raw := arguments.Raw()
@@ -422,21 +459,6 @@ func (arguments *Arguments) AsCodeblock() *Codeblock {
 		Language: language,
 		Content:  content,
 	}
-}
-
-// Amount returns the amount of given arguments
-func (arguments *Arguments) Amount() int {
-	return len(arguments.arguments)
-}
-
-// Get returns the n'th argument
-func (arguments *Arguments) Get(n int) *Argument {
-	if arguments.Amount() <= n {
-		return &Argument{
-			raw: "",
-		}
-	}
-	return arguments.arguments[n]
 }
 
 // Argument represents a single argument
@@ -501,4 +523,9 @@ func (argument *Argument) AsChannelMentionID() string {
 	// Parse the channel ID
 	channelID := RegexChannelMention.FindStringSubmatch(argument.raw)[1]
 	return channelID
+}
+
+// AsDuration parses the given argument into a duration
+func (argument *Argument) AsDuration() (time.Duration, error) {
+	return tparse.AbsoluteDuration(time.Now(), argument.raw)
 }

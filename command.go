@@ -12,18 +12,26 @@ type Command struct {
 	Flags       []string
 	IgnoreCase  bool
 	SubCommands []*Command
-	RateLimiter *RateLimiter
+	RateLimiter RateLimiter
 	Handler     ExecutionHandler
 }
 
 // GetSubCmd returns the sub command with the given name if it exists
 func (command *Command) GetSubCmd(name string) *Command {
 	for _, subCommand := range command.SubCommands {
-		if subCommand.Name == name || stringArrayContains(subCommand.Aliases, name, subCommand.IgnoreCase) {
+		if equals(subCommand.Name, name, subCommand.IgnoreCase) || stringArrayContains(subCommand.Aliases, name, subCommand.IgnoreCase) {
 			return subCommand
 		}
 	}
 	return nil
+}
+
+// NotifyRateLimiter notifies the rate limiter about a new execution and returns false if the user is being rate limited
+func (command *Command) NotifyRateLimiter(ctx *Ctx) bool {
+	if command.RateLimiter == nil {
+		return true
+	}
+	return command.RateLimiter.NotifyExecution(ctx)
 }
 
 // trigger triggers the given command
@@ -52,20 +60,12 @@ func (command *Command) trigger(ctx *Ctx) {
 		}
 	}
 
-	// Check if the user is being rate limited
-	if command.RateLimiter != nil && !command.RateLimiter.NotifyExecution(ctx) {
-		return
+	// Prepare all middlewares
+	nextHandler := command.Handler
+	for _, middleware := range ctx.Router.Middlewares {
+		nextHandler = middleware(nextHandler)
 	}
 
-	// Run all middlewares assigned to this command
-	for _, flag := range command.Flags {
-		for _, middleware := range ctx.Router.Middlewares[flag] {
-			if !middleware(ctx) {
-				return
-			}
-		}
-	}
-
-	// Handle this command if the first argument matched no sub command
-	command.Handler(ctx)
+	// Run all middlewares
+	nextHandler(ctx)
 }
