@@ -136,7 +136,7 @@ func (router *Router) Handler() func(*discordgo.Session, *discordgo.MessageCreat
 				}
 
 				// Trigger the command
-				command.trigger(ctx)
+				command.Trigger(ctx)
 			}
 		}
 	}

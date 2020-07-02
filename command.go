@@ -52,8 +52,8 @@ func (command *Command) NotifyRateLimiter(ctx *Ctx) bool {
 	return command.RateLimiter.NotifyExecution(ctx)
 }
 
-// trigger triggers the given command
-func (command *Command) trigger(ctx *Ctx) {
+// Trigger triggers the given command
+func (command *Command) Trigger(ctx *Ctx) {
 	// Check if the first argument matches a sub command
 	if len(ctx.Arguments.arguments) > 0 {
 		argument := ctx.Arguments.Get(0).Raw()
@@ -66,7 +66,7 @@ func (command *Command) trigger(ctx *Ctx) {
 			}
 
 			// Trigger the sub command
-			subCommand.trigger(&Ctx{
+			subCommand.Trigger(&Ctx{
 				Session:       ctx.Session,
 				Event:         ctx.Event,
 				Arguments:     arguments,
