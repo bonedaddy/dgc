@@ -61,7 +61,7 @@ func (router *Router) RegisterMiddleware(middleware Middleware) {
 
 // InitializeStorage initializes a storage map
 func (router *Router) InitializeStorage(name string) {
-	router.Storage[name] = newObjectsMap()
+	router.Storage[name] = NewObjectsMap()
 }
 
 // Initialize initializes the message event listener
@@ -130,7 +130,7 @@ func (router *Router) Handler() func(*discordgo.Session, *discordgo.MessageCreat
 					Session:       session,
 					Event:         event,
 					Arguments:     ParseArguments(content),
-					CustomObjects: newObjectsMap(),
+					CustomObjects: NewObjectsMap(),
 					Router:        router,
 					Command:       command,
 				}

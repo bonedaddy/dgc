@@ -9,9 +9,9 @@ type ObjectsMap struct {
 	innerMap map[string]interface{}
 }
 
-// newObjectsMap initializes a new
+// NewObjectsMap initializes a new
 // ObjectsMap instance
-func newObjectsMap() *ObjectsMap {
+func NewObjectsMap() *ObjectsMap {
 	return &ObjectsMap{
 		innerMap: make(map[string]interface{}),
 	}
