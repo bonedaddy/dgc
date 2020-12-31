@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Lukaesebrot/dgc"
+	"github.com/bonedaddy/dgc"
 )
 
 // This example shows how to use the integrated argument parser
