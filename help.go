@@ -160,7 +160,7 @@ func renderDefaultGeneralHelpEmbed(router *Router, page int) (*discordgo.Message
 	return &discordgo.MessageEmbed{
 		Type:        "rich",
 		Title:       "Command List (Page " + strconv.Itoa(page) + "/" + strconv.Itoa(pageAmount) + ")",
-		Description: "These are all the available commands. Type `" + prefix + "help <command name>` to find out more about a specific command.",
+		Description: "These are all the available commands. Type `" + prefix + " help <command name>` to find out more about a specific command.",
 		Timestamp:   time.Now().Format(time.RFC3339),
 		Color:       0xffff00,
 		Fields:      fields,
@@ -182,7 +182,7 @@ func renderDefaultSpecificHelpEmbed(ctx *Ctx, command *Command) *discordgo.Messa
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Message",
-					Value:  "```The given command doesn't exist. Type `" + prefix + "help` for a list of available commands.```",
+					Value:  "```The given command doesn't exist. Type `" + prefix + " help` for a list of available commands.```",
 					Inline: false,
 				},
 			},
